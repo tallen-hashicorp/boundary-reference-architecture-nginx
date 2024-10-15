@@ -21,6 +21,7 @@ The intent of this example is to show an example Boundary deployment on Kubernet
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.12.0-beta.0/deploy/static/provider/cloud/deploy.yaml
 ```
 
+
 ### Deploy
 
 Start minikube:
@@ -46,8 +47,6 @@ First add some entries to your hosts file, this is for local testing
 ```bash
 { grep -q '127.0.0.1 api.boundary-example.com' /etc/hosts || echo '127.0.0.1 api.boundary-example.com' | sudo tee -a /etc/hosts; } && { grep -q '127.0.0.1 cluster.boundary-example.com' /etc/hosts || echo '127.0.0.1 cluster.boundary-example.com' | sudo tee -a /etc/hosts; }
 ```
-
-http://api.boundary-example.com:30000/
 
 ### Deploy an external worker
 Run the following localy to deploy an external worker

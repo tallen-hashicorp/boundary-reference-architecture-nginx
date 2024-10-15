@@ -59,3 +59,7 @@
 
 **/.terraformrc
 **/terraform.rc
+
+
+cert.crt
+cert.key
