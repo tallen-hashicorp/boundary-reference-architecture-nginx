@@ -25,7 +25,7 @@ worker {
 	name = "kubernetes-worker"
 	description = "A worker for a kubernetes demo"
 	address = "localhost"
-  controllers = ["localhost"]
+    controllers = ["localhost"]
 	public_addr = "localhost"
 }
 

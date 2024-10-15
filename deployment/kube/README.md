@@ -67,44 +67,6 @@ Run the following locally to deploy an external worker:
 boundary server -config=worker/boundary-worker.hcl
 ```
 
-**Issues**
-
-Error Message: `tls: first record does not look like a TLS handshake`
-
-I got this error when connecting on 30000 (ingress port 80):
-
-```json
-{"id":"r6q1HnPOfg","source":"https://hashicorp.com/boundary/tyler.allen-CW66LKGXFF/worker","specversion":"1.0","type":"error","data":{"error":"(nodeenrollment.protocol.attemptFetch) error tls handshaking connection on client: tls: first record does not look like a TLS handshake","error_fields":{},"id":"e_DDpjcQWZMD","version":"v0.1","op":"worker.(Worker).upstreamDialerFunc"},"datacontentype":"application/cloudevents","time":"2024-10-15T17:45:48.360591+01:00"}
-```
-
-Error Message: `remote error: tls: no application protocol`
-I got this when connecting on 30001 (ingress port 443) using self-signed cert on ingress TLS. However, looking at the NGINX logs I got:
-
-```text
-│ W1015 16:47:00.363852       7 controller.go:1457] SSL certificate "default/boundary-tls-secret" does not contain a Common Name or Subject Alternative Name for server "cluster.boundary-example.com": x509 │
-│ : certificate is not valid for any names, but wanted to match cluster.boundary-example.com
-```
-
-Boundary gave me:
-
-```json
-{"id":"KThk9Hhje2","source":"https://hashicorp.com/boundary/tyler.allen-CW66LKGXFF/worker","specversion":"1.0","type":"error","data":{"error":"worker.(Worker).upstreamDialerFunc: unknown, unknown: error #0: (nodeenrollment.protocol.attemptFetch) error tls handshaking connection on client: remote error: tls: no application protocol","error_fields":{"Code":0,"Msg":"","Op":"worker.(Worker).upstreamDialerFunc","Wrapped":{}},"id":"e_qxcWGmNJqf","version":"v0.1","op":"worker.(Worker).upstreamDialerFunc"},"datacontentype":"application/cloudevents","time":"2024-10-15T17:47:42.375416+01:00"}
-```
-
-I have tried updating the certs `subjectAltName`. I noticed this `"successfully validated configuration, accepting" ingress="default/boundary-controller-ingress"`. However, I got the same `tls: no application protocol`.
-
-Next, I tried removing `tls_disable = true` from the `listener` and adding `tls_cert_file = "cert.crt"` & `tls_key_file = "cert.key"`. This did not help, I rolled back adding the certs for now. 
-
-Now trying a port forward firect to 9201 and sending the worker at that so can look at the traffic. This works ok when doing this so must be an issue with the ingress
-
-trying this
-```
-curl -k https://cluster.boundary-example.com:30001
-curl -k https://127.0.0.1:9201
-```
-
-Looking in wireshark i'm seeing the worker is trying tls 1.2 when connecting to the ingress, when it uses the port forward it goes to 1.3
-
 ---
 
 ### Port forwarding and next steps
@@ -223,3 +185,61 @@ PONG
 ```
 
 Congrats! You've just deployed Boundary onto Kubernetes and are able to access other containers running on Kubernetes using it.
+
+---
+
+### Issues I found
+
+Error Message: `tls: first record does not look like a TLS handshake`
+
+I got this error when connecting on 30000 (ingress port 80):
+
+```json
+{"id":"r6q1HnPOfg","source":"https://hashicorp.com/boundary/tyler.allen-CW66LKGXFF/worker","specversion":"1.0","type":"error","data":{"error":"(nodeenrollment.protocol.attemptFetch) error tls handshaking connection on client: tls: first record does not look like a TLS handshake","error_fields":{},"id":"e_DDpjcQWZMD","version":"v0.1","op":"worker.(Worker).upstreamDialerFunc"},"datacontentype":"application/cloudevents","time":"2024-10-15T17:45:48.360591+01:00"}
+```
+
+Error Message: `remote error: tls: no application protocol`
+I got this when connecting on 30001 (ingress port 443) using self-signed cert on ingress TLS. However, looking at the NGINX logs I got:
+
+```
+│ W1015 16:47:00.363852       7 controller.go:1457] SSL certificate "default/boundary-tls-secret" does not contain a Common Name or Subject Alternative Name for server "cluster.boundary-example.com": x509 │
+│ : certificate is not valid for any names, but wanted to match cluster.boundary-example.com
+```
+
+Boundary gave me:
+
+```json
+{"id":"KThk9Hhje2","source":"https://hashicorp.com/boundary/tyler.allen-CW66LKGXFF/worker","specversion":"1.0","type":"error","data":{"error":"worker.(Worker).upstreamDialerFunc: unknown, unknown: error #0: (nodeenrollment.protocol.attemptFetch) error tls handshaking connection on client: remote error: tls: no application protocol","error_fields":{"Code":0,"Msg":"","Op":"worker.(Worker).upstreamDialerFunc","Wrapped":{}},"id":"e_qxcWGmNJqf","version":"v0.1","op":"worker.(Worker).upstreamDialerFunc"},"datacontentype":"application/cloudevents","time":"2024-10-15T17:47:42.375416+01:00"}
+```
+
+I have tried updating the certs `subjectAltName`. I noticed this `"successfully validated configuration, accepting" ingress="default/boundary-controller-ingress"`. However, I got the same `tls: no application protocol`.
+
+Next, I tried removing `tls_disable = true` from the `listener` and adding `tls_cert_file = "cert.crt"` & `tls_key_file = "cert.key"`. This did not help, I rolled back adding the certs for now. 
+
+Now trying a port forward firect to 9201 and sending the worker at that so can look at the traffic. This works ok when doing this so must be an issue with the ingress
+
+trying this
+```
+curl -k https://cluster.boundary-example.com:30001
+curl -k https://127.0.0.1:9201
+```
+
+Looking in wireshark i'm seeing the worker is trying tls 1.2 when connecting to the ingress, when it uses the port forward it goes to 1.3. Found these issues:
+
+* [https://github.com/hashicorp/boundary/issues/979](https://github.com/hashicorp/boundary/issues/979)
+* [Boundary connect ssh throwing failed to WebSocket dial error](https://discuss.hashicorp.com/t/boundary-connect-ssh-throwing-failed-to-websocket-dial-error/21609)
+
+[This](https://developer.hashicorp.com/boundary/docs/install-boundary/architecture/system-requirements#network-traffic-encryption) states we can use a layer 7 load balancer with no configured TLS termination. I feel the problem maybe the tls termination. 
+
+Updated the config, trying removing tls_disable = true from the boundary config, its that or the address I think. 
+
+Using this to look at logs
+```bash
+kubectl logs -l app.kubernetes.io/name=ingress-nginx -n ingress-nginx -f
+```
+
+Think it could just be a tls issue, all the listners had tls_disable = true so adding in a cert file for this. 
+
+[this](https://discuss.hashicorp.com/t/how-to-configure-boundary-for-https/26575/3) says: worker to controller connections are not HTTP but TCP connections, same as why you cannot expose TCP database through ingress. If you are using an Nginx controller or Kubernetes controller
+use this: [Exposing TCP and UDP services - NGINX Ingress Controller 15](https://kubernetes.github.io/ingress-nginx/user-guide/exposing-tcp-udp-services/). After this you will need to expose port 9201 or whatever you used in the boundary worker service on the Kubernetes ingress controller service , if you are on AWS; the AWS load-balancer will create a target group and listener for the new port, it should be in a health state. you can also test with telnet worker.domain.com 9201
+same for the controller It has 2 port one is cluster port 9201 which is a TCP connection the worker will need to be able to access it so don’t try to put it behind TCP SSL , you can put the API port 9200 behind SSL but i haven’t tried it.

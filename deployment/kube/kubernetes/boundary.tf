@@ -150,9 +150,9 @@ resource "kubernetes_service" "boundary_controller" {
   }
 }
 
-resource "kubernetes_ingress_v1" "boundary_controller_ingress" {
+resource "kubernetes_ingress_v1" "boundary_api_ingress" {
   metadata {
-    name = "boundary-controller-ingress"
+    name = "boundary-api-ingress"
     labels = {
       app = "boundary-controller"
     }
@@ -160,6 +160,7 @@ resource "kubernetes_ingress_v1" "boundary_controller_ingress" {
 
   spec {
     ingress_class_name = "nginx"
+    
     rule {
       host = "api.boundary-example.com"
       http {
@@ -177,6 +178,24 @@ resource "kubernetes_ingress_v1" "boundary_controller_ingress" {
       }
     }
 
+    tls {
+      hosts      = ["api.boundary-example.com"]
+      secret_name = "boundary-tls-secret"
+    }
+  }
+}
+
+resource "kubernetes_ingress_v1" "boundary_cluster_ingress" {
+  metadata {
+    name = "boundary-cluster-ingress"
+    labels = {
+      app = "boundary-controller"
+    }
+  }
+
+  spec {
+    ingress_class_name = "nginx"
+    
     rule {
       host = "cluster.boundary-example.com"
       http {
@@ -192,17 +211,6 @@ resource "kubernetes_ingress_v1" "boundary_controller_ingress" {
           }
         }
       }
-    }
-
-    # The following is needed
-    # ----
-    # kubectl create secret tls boundary-tls-secret \
-    #   --cert=/path/to/cert.crt \
-    #   --key=/path/to/cert.key
-    # ----
-    tls {
-      hosts      = ["api.boundary-example.com", "cluster.boundary-example.com"]
-      secret_name = "boundary-tls-secret"
     }
   }
 }
@@ -233,6 +241,7 @@ resource "kubernetes_service_v1" "nginx_ingress" {
       port        = 443 
       node_port   = 30001 # Using this for local testing
       name        = "https"
+      protocol    = "TCP"
       target_port = 443
     }
   }
