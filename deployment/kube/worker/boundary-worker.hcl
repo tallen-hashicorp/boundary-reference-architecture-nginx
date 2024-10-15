@@ -6,7 +6,7 @@ worker {
 	name = "local-worker"
 	description = "A Local worker for a kubernetes demo"
 	address = "localhost"
-    controllers = ["cluster.boundary-example.com:30000"]
+    controllers = ["cluster.boundary-example.com:30001"]
 	public_addr = "localhost"
 }
 

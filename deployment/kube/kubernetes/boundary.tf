@@ -200,10 +200,10 @@ resource "kubernetes_ingress_v1" "boundary_controller_ingress" {
     #   --cert=/path/to/cert.crt \
     #   --key=/path/to/cert.key
     # ----
-    # tls {
-    #   hosts      = ["api.boundary-example.com", "cluster.boundary-example.com"]
-    #   secret_name = "boundary-tls-secret"
-    # }
+    tls {
+      hosts      = ["api.boundary-example.com", "cluster.boundary-example.com"]
+      secret_name = "boundary-tls-secret"
+    }
   }
 }
 
