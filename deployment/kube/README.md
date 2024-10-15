@@ -41,6 +41,21 @@ Run terraform apply against the kubernetes terraform module:
 $ terraform apply -target module.kubernetes
 ```
 
+### Access via NGINX controller
+First add some entries to your hosts file, this is for local testing
+```bash
+{ grep -q '127.0.0.1 api.boundary-example.com' /etc/hosts || echo '127.0.0.1 api.boundary-example.com' | sudo tee -a /etc/hosts; } && { grep -q '127.0.0.1 cluster.boundary-example.com' /etc/hosts || echo '127.0.0.1 cluster.boundary-example.com' | sudo tee -a /etc/hosts; }
+```
+
+http://api.boundary-example.com:30000/
+
+### Deploy an external worker
+Run the following localy to deploy an external worker
+```bash
+boundary server -config=worker/boundary-worker.hcl
+```
+
+### Port forwarding and next steps
 Expose all 3 Boundary services running on minikube, on your local host using `kubectl port-forward` (you'll
 need to do this in 3 separate long running shells):
 
@@ -66,12 +81,6 @@ address found in the previous command:
 # Set the external address for your service
 export KUBE_SERVICE_ADDRESS=$(echo "http://127.0.0.1:9200")
 terraform apply -target module.boundary -var boundary_addr=$KUBE_SERVICE_ADDRESS
-```
-
-### Access via NGINX controller
-First add some entries to your hosts file, this is for local testing
-```bash
-{ grep -q '127.0.0.1 api.boundary-example.com' /etc/hosts || echo '127.0.0.1 api.boundary-example.com' | sudo tee -a /etc/hosts; } && { grep -q '127.0.0.1 cluster.boundary-example.com' /etc/hosts || echo '127.0.0.1 cluster.boundary-example.com' | sudo tee -a /etc/hosts; }
 ```
 
 ### Verify
