@@ -25,14 +25,15 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/cont
 ```bash
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
   -keyout cert.key -out cert.crt \
-  -subj "/CN=api.boundary-example.com/O=YourOrganization"
+  -subj "/CN=api.boundary-example.com/O=YourOrganization" \
+  -addext "subjectAltName=DNS:api.boundary-example.com,DNS:cluster.boundary-example.com"
+
 
 kubectl create secret tls boundary-tls-secret \
   --cert=cert.crt \
   --key=cert.key
 
 ```
-
 
 ### Deploy
 
@@ -66,20 +67,32 @@ Run the following localy to deploy an external worker
 boundary server -config=worker/boundary-worker.hcl
 ```
 
-this config gets the following error when connecting on 30000 (ingress port 80)
+**Issues**
+
+Error Message: `tls: first record does not look like a TLS handshake`
+
+I got this errror this config gets the following error when connecting on 30000 (ingress port 80)
 ```json
 {"id":"r6q1HnPOfg","source":"https://hashicorp.com/boundary/tyler.allen-CW66LKGXFF/worker","specversion":"1.0","type":"error","data":{"error":"(nodeenrollment.protocol.attemptFetch) error tls handshaking connection on client: tls: first record does not look like a TLS handshake","error_fields":{},"id":"e_DDpjcQWZMD","version":"v0.1","op":"worker.(Worker).upstreamDialerFunc"},"datacontentype":"application/cloudevents","time":"2024-10-15T17:45:48.360591+01:00"}
 ```
 
-Error Message: `tls: first record does not look like a TLS handshake`
+Error Message: `remote error: tls: no application protocol`
+I got this when connecting on 30001 (ingress port 443) using self seigned cert on ingress TLS however looking at the nginx logs I got:
 
-when connecting on 30000 (ingress port 80) using self seigned cert on ingress TLS
+```text
+│ W1015 16:47:00.363852       7 controller.go:1457] SSL certificate "default/boundary-tls-secret" does not contain a Common Name or Subject Alternative Name for server "cluster.boundary-example.com": x509 │
+│ : certificate is not valid for any names, but wanted to match cluster.boundary-example.com
+```
+
+boundary gave me
 
 ```json
 {"id":"KThk9Hhje2","source":"https://hashicorp.com/boundary/tyler.allen-CW66LKGXFF/worker","specversion":"1.0","type":"error","data":{"error":"worker.(Worker).upstreamDialerFunc: unknown, unknown: error #0: (nodeenrollment.protocol.attemptFetch) error tls handshaking connection on client: remote error: tls: no application protocol","error_fields":{"Code":0,"Msg":"","Op":"worker.(Worker).upstreamDialerFunc","Wrapped":{}},"id":"e_qxcWGmNJqf","version":"v0.1","op":"worker.(Worker).upstreamDialerFunc"},"datacontentype":"application/cloudevents","time":"2024-10-15T17:47:42.375416+01:00"}
 ```
 
-Error Message: `remote error: tls: no application protocol`
+I have tried updating the certs `subjectAltName` I noticed this `"successfully validated configuration, accepting" ingress="default/boundary-controller-ingress"` However I got the same `tls: no application protocol`
+
+Next I tried removing `tls_disable = true` from the `listener` and adding 	`tls_cert_file = "cert.crt"` & `tls_key_file = "cert.key"`
 
 
 ### Port forwarding and next steps
