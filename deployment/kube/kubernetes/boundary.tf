@@ -164,7 +164,7 @@ resource "kubernetes_ingress_v1" "boundary_controller_ingress" {
       host = "api.boundary-example.com"
       http {
         path {
-          path = "/*"
+          path = "/"
           backend {
             service {
               name = kubernetes_service.boundary_controller.metadata[0].name
@@ -181,7 +181,7 @@ resource "kubernetes_ingress_v1" "boundary_controller_ingress" {
       host = "cluster.boundary-example.com"
       http {
         path {
-          path = "/*"
+          path = "/"
           backend {
             service {
               name = kubernetes_service.boundary_controller.metadata[0].name

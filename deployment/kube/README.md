@@ -68,6 +68,12 @@ export KUBE_SERVICE_ADDRESS=$(echo "http://127.0.0.1:9200")
 terraform apply -target module.boundary -var boundary_addr=$KUBE_SERVICE_ADDRESS
 ```
 
+### Access via NGINX controller
+First add some entries to your hosts file, this is for local testing
+```bash
+{ grep -q '127.0.0.1 api.boundary-example.com' /etc/hosts || echo '127.0.0.1 api.boundary-example.com' | sudo tee -a /etc/hosts; } && { grep -q '127.0.0.1 cluster.boundary-example.com' /etc/hosts || echo '127.0.0.1 cluster.boundary-example.com' | sudo tee -a /etc/hosts; }
+```
+
 ### Verify
 
 Check the deployments:
