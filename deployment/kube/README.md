@@ -93,9 +93,17 @@ Boundary gave me:
 
 I have tried updating the certs `subjectAltName`. I noticed this `"successfully validated configuration, accepting" ingress="default/boundary-controller-ingress"`. However, I got the same `tls: no application protocol`.
 
-Next, I tried removing `tls_disable = true` from the `listener` and adding `tls_cert_file = "cert.crt"` & `tls_key_file = "cert.key"`.
+Next, I tried removing `tls_disable = true` from the `listener` and adding `tls_cert_file = "cert.crt"` & `tls_key_file = "cert.key"`. This did not help, I rolled back adding the certs for now. 
 
+Now trying a port forward firect to 9201 and sending the worker at that so can look at the traffic. This works ok when doing this so must be an issue with the ingress
 
+trying this
+```
+curl -k https://cluster.boundary-example.com:30001
+curl -k https://127.0.0.1:9201
+```
+
+Looking in wireshark i'm seeing the worker is trying tls 1.2 when connecting to the ingress, when it uses the port forward it goes to 1.3
 
 ---
 
