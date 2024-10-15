@@ -185,6 +185,12 @@ resource "kubernetes_ingress" "boundary_controller_ingress" {
       }
     }
 
+    # The following is needed
+    # ----
+    # kubectl create secret tls boundary-tls-secret \
+    #   --cert=/path/to/cert.crt \
+    #   --key=/path/to/cert.key
+    # ----
     # tls {
     #   hosts      = ["api.boundary-example.com", "cluster.boundary-example.com"]
     #   secret_name = "boundary-tls-secret"
