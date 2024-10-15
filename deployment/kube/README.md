@@ -54,6 +54,11 @@ Run the following localy to deploy an external worker
 boundary server -config=worker/boundary-worker.hcl
 ```
 
+this config gets the following error
+```json
+{"id":"r6q1HnPOfg","source":"https://hashicorp.com/boundary/tyler.allen-CW66LKGXFF/worker","specversion":"1.0","type":"error","data":{"error":"(nodeenrollment.protocol.attemptFetch) error tls handshaking connection on client: tls: first record does not look like a TLS handshake","error_fields":{},"id":"e_DDpjcQWZMD","version":"v0.1","op":"worker.(Worker).upstreamDialerFunc"},"datacontentype":"application/cloudevents","time":"2024-10-15T17:45:48.360591+01:00"}
+```
+
 ### Port forwarding and next steps
 Expose all 3 Boundary services running on minikube, on your local host using `kubectl port-forward` (you'll
 need to do this in 3 separate long running shells):
