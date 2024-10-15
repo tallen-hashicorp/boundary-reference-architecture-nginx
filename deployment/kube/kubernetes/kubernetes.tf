@@ -2,6 +2,6 @@
 # SPDX-License-Identifier: MPL-2.0
 
 provider "kubernetes" {
-  config_context_cluster = "minikube"
+  config_context_cluster = "docker-desktop"
   config_path            = "~/.kube/config"
 }

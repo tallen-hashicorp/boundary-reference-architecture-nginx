@@ -16,6 +16,11 @@ The intent of this example is to show an example Boundary deployment on Kubernet
 - Minikube
 - Optional: Redis CLI for target access
 
+### Deploy Nginx Controller
+```bash
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.12.0-beta.0/deploy/static/provider/cloud/deploy.yaml
+```
+
 ### Deploy
 
 Start minikube:

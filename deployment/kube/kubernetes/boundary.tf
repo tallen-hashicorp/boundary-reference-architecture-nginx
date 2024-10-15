@@ -149,3 +149,68 @@ resource "kubernetes_service" "boundary_controller" {
     }
   }
 }
+
+resource "kubernetes_ingress" "boundary_controller_ingress" {
+  metadata {
+    name = "boundary-controller-ingress"
+    labels = {
+      app = "boundary-controller"
+    }
+  }
+
+  spec {
+    rule {
+      host = "api.boundary-example.com"
+      http {
+        path {
+          path = "/"
+          backend {
+            service_name = kubernetes_service.boundary_controller.metadata[0].name
+            service_port = "api" # Refers to the 9200 port in service
+          }
+        }
+      }
+    }
+
+    rule {
+      host = "cluster.boundary-example.com"
+      http {
+        path {
+          path = "/"
+          backend {
+            service_name = kubernetes_service.boundary_controller.metadata[0].name
+            service_port = "cluster" # Refers to the 9201 port in service
+          }
+        }
+      }
+    }
+
+    # tls {
+    #   hosts      = ["api.boundary-example.com", "cluster.boundary-example.com"]
+    #   secret_name = "boundary-tls-secret"
+    # }
+  }
+}
+
+resource "kubernetes_service" "nginx_ingress" {
+  metadata {
+    name = "nginx-ingress"
+  }
+
+  spec {
+    type = "LoadBalancer"
+    selector = {
+      app = "nginx-ingress"
+    }
+
+    port {
+      port        = 80
+      target_port = 80
+    }
+
+    port {
+      port        = 443
+      target_port = 443
+    }
+  }
+}
