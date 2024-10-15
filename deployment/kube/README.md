@@ -45,15 +45,15 @@ Expose all 3 Boundary services running on minikube, on your local host using `ku
 need to do this in 3 separate long running shells):
 
 ```
-$ kubectl port-forward pods/$(kubectl get pods | grep boundary | cut -d " " -f 1) 9200:9200
+$ kubectl port-forward services/boundary-controller 9200:9200
 Forwarding from 127.0.0.1:9200 -> 9200
 Forwarding from [::1]:9200 -> 9200
 
-$ kubectl port-forward pods/$(kubectl get pods | grep boundary | cut -d " " -f 1) 9201:9201
+$ kubectl port-forward services/boundary-controller 9201:9201
 Forwarding from 127.0.0.1:9201 -> 9201
 Forwarding from [::1]:9201 -> 9201
 
-$ kubectl port-forward pods/$(kubectl get pods | grep boundary | cut -d " " -f 1) 9202:9202
+$ kubectl port-forward services/boundary-controller 9202:9202
 Forwarding from 127.0.0.1:9202 -> 9202
 Forwarding from [::1]:9202 -> 9202
 Handling connection for 9202
