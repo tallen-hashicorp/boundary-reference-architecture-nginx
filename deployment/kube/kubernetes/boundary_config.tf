@@ -10,6 +10,8 @@ resource "kubernetes_config_map" "boundary" {
     "boundary.hcl" = <<EOF
 disable_mlock = true
 
+log_level = "debug"
+
 controller {
 	name = "kubernetes-controller"
 	description = "A controller for a kubernetes demo!"
