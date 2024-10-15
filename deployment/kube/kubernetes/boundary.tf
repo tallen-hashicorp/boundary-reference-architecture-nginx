@@ -150,7 +150,7 @@ resource "kubernetes_service" "boundary_controller" {
   }
 }
 
-resource "kubernetes_ingress" "boundary_controller_ingress" {
+resource "kubernetes_ingress_v1" "boundary_controller_ingress" {
   metadata {
     name = "boundary-controller-ingress"
     labels = {
@@ -159,14 +159,19 @@ resource "kubernetes_ingress" "boundary_controller_ingress" {
   }
 
   spec {
+    ingress_class_name = "nginx"
     rule {
       host = "api.boundary-example.com"
       http {
         path {
-          path = "/"
+          path = "/*"
           backend {
-            service_name = kubernetes_service.boundary_controller.metadata[0].name
-            service_port = "api" # Refers to the 9200 port in service
+            service {
+              name = kubernetes_service.boundary_controller.metadata[0].name
+              port {
+                number = 9200
+              }
+            }
           }
         }
       }
@@ -176,10 +181,14 @@ resource "kubernetes_ingress" "boundary_controller_ingress" {
       host = "cluster.boundary-example.com"
       http {
         path {
-          path = "/"
+          path = "/*"
           backend {
-            service_name = kubernetes_service.boundary_controller.metadata[0].name
-            service_port = "cluster" # Refers to the 9201 port in service
+            service {
+              name = kubernetes_service.boundary_controller.metadata[0].name
+              port {
+                number = 9201
+              }
+            }
           }
         }
       }
@@ -198,24 +207,32 @@ resource "kubernetes_ingress" "boundary_controller_ingress" {
   }
 }
 
-resource "kubernetes_service" "nginx_ingress" {
+resource "kubernetes_service_v1" "nginx_ingress" {
   metadata {
-    name = "nginx-ingress"
+    name = "nginx-ingress-boundary"
+    namespace = "ingress-nginx"
   }
 
   spec {
-    type = "LoadBalancer"
+    type = "NodePort" # Using node port for local testing
+    #type = "LoadBalancer"
     selector = {
-      app = "nginx-ingress"
+      "app.kubernetes.io/component" = "controller"
+      "app.kubernetes.io/instance"  = "ingress-nginx"
+      "app.kubernetes.io/name"      = "ingress-nginx"
     }
 
     port {
-      port        = 80
+      port        = 80 # Using this for local testing
+      node_port   = 30000 
+      name        = "http"
       target_port = 80
     }
 
     port {
-      port        = 443
+      port        = 443 
+      node_port   = 30001 # Using this for local testing
+      name        = "https"
       target_port = 443
     }
   }
